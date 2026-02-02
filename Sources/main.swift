@@ -114,6 +114,7 @@ final class TickerView: NSView {
     private let updated = NSTextField(labelWithString: "—")
 
     private var snapshot: PricesSnapshot?
+    private var clockTimer: Timer?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -184,10 +185,20 @@ final class TickerView: NSView {
             refreshBtn.heightAnchor.constraint(equalToConstant: 24)
         ])
 
+        // Live clock (updates every second)
+        clockTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.updateClock()
+        }
+
         update(snapshot: PricesSnapshot(btcUsd: nil, ethUsd: nil, xauUsd: nil, xagUsd: nil, updatedAt: Date()))
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    deinit {
+        clockTimer?.invalidate()
+        clockTimer = nil
+    }
 
     override func layout() {
         super.layout()
@@ -204,10 +215,13 @@ final class TickerView: NSView {
         eth.stringValue = "ETH: \(fmt(snapshot.ethUsd))"
         xau.stringValue = "XAU/USD: \(fmt(snapshot.xauUsd))"
         xag.stringValue = "XAG/USD: \(fmt(snapshot.xagUsd))"
+        updateClock()
+    }
 
+    private func updateClock() {
         let df = DateFormatter()
         df.dateFormat = "HH:mm:ss"
-        updated.stringValue = "Updated: \(df.string(from: snapshot.updatedAt))"
+        updated.stringValue = "Now: \(df.string(from: Date()))"
     }
 
     private func fmt(_ v: Double?) -> String {
