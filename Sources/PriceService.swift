@@ -1,4 +1,5 @@
 import Foundation
+import CFNetwork
 
 struct PricesSnapshot {
     var btcUsd: Double?
@@ -15,6 +16,12 @@ final class PriceService {
         let cfg = URLSessionConfiguration.ephemeral
         cfg.timeoutIntervalForRequest = 10
         cfg.timeoutIntervalForResource = 10
+
+        // Force using macOS System Proxy settings (HTTP/HTTPS/SOCKS/PAC) when configured.
+        if let dict = CFNetworkCopySystemProxySettings()?.takeRetainedValue() as? [AnyHashable: Any] {
+            cfg.connectionProxyDictionary = dict
+        }
+
         self.session = URLSession(configuration: cfg)
     }
 
