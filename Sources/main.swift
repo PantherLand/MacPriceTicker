@@ -211,7 +211,7 @@ final class TickerView: NSView {
     }
 
     private func fmt(_ v: Double?) -> String {
-        guard let v else { return "—" }
+        guard let v else { return "loading…" }
         if v >= 1000 { return String(format: "$%.0f", v) }
         if v >= 100 { return String(format: "$%.2f", v) }
         return String(format: "$%.4f", v)
