@@ -13,8 +13,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory) // no dock icon
 
-        view = TickerView(frame: NSRect(x: 0, y: 0, width: 260, height: 120))
+        view = TickerView(frame: NSRect(x: 0, y: 0, width: 280, height: 120))
         view.onMenuRequested = { [weak self] in self?.showMenu() }
+        view.onRefreshRequested = { [weak self] in self?.refreshNow() }
 
         window = FloatingPanel(contentRect: view.bounds)
         window.contentView = view
@@ -102,8 +103,10 @@ final class FloatingPanel: NSPanel {
 
 final class TickerView: NSView {
     var onMenuRequested: (() -> Void)?
+    var onRefreshRequested: (() -> Void)?
 
     private let title = NSTextField(labelWithString: "Ticker")
+    private let refreshBtn = NSButton(title: "↻", target: nil, action: nil)
     private let btc = NSTextField(labelWithString: "BTC: —")
     private let eth = NSTextField(labelWithString: "ETH: —")
     private let xau = NSTextField(labelWithString: "XAU/USD: —")
@@ -141,6 +144,15 @@ final class TickerView: NSView {
         title.textColor = .white
         title.stringValue = "BTC / ETH / Gold"
 
+        refreshBtn.bezelStyle = .texturedRounded
+        refreshBtn.isBordered = true
+        refreshBtn.font = .systemFont(ofSize: 13, weight: .bold)
+        refreshBtn.contentTintColor = NSColor(white: 1, alpha: 0.85)
+        refreshBtn.wantsLayer = true
+        refreshBtn.layer?.cornerRadius = 8
+        refreshBtn.target = self
+        refreshBtn.action = #selector(refreshClicked)
+
         for l in [btc, eth, xau] {
             l.font = .monospacedDigitSystemFont(ofSize: 14, weight: .semibold)
             l.textColor = .white
@@ -149,7 +161,12 @@ final class TickerView: NSView {
         updated.font = .systemFont(ofSize: 11)
         updated.textColor = NSColor(white: 1, alpha: 0.65)
 
-        let stack = NSStackView(views: [title, btc, eth, xau, updated])
+        let header = NSStackView(views: [title, NSView(), refreshBtn])
+        header.orientation = .horizontal
+        header.alignment = .centerY
+        header.spacing = 8
+
+        let stack = NSStackView(views: [header, btc, eth, xau, updated])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 6
@@ -160,7 +177,10 @@ final class TickerView: NSView {
             stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
             stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
             stack.topAnchor.constraint(equalTo: topAnchor, constant: 12),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -12)
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -12),
+
+            refreshBtn.widthAnchor.constraint(equalToConstant: 30),
+            refreshBtn.heightAnchor.constraint(equalToConstant: 24)
         ])
 
         update(snapshot: PricesSnapshot(btcUsd: nil, ethUsd: nil, xauUsd: nil, updatedAt: Date()))
@@ -171,6 +191,10 @@ final class TickerView: NSView {
     override func layout() {
         super.layout()
         layer?.sublayers?.first?.frame = bounds
+    }
+
+    @objc private func refreshClicked() {
+        onRefreshRequested?()
     }
 
     func update(snapshot: PricesSnapshot) {
