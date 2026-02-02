@@ -21,7 +21,7 @@ app: build
 	cp Resources/Info.plist $(APP_DIR)/Contents/Info.plist
 
 run: app
-	open -a "./$(APP_DIR)"
+	open "./$(APP_DIR)"
 
 clean:
 	rm -rf $(BIN) $(APP_DIR)

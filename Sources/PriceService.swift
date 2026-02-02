@@ -53,23 +53,36 @@ final class PriceService {
 
     // MARK: - Gold (XAU/USD)
 
-    // Public CSV from Stooq. Note: quote may be delayed.
-    // Example:
-    // Symbol,Date,Time,Open,High,Low,Close,Volume
-    // XAUUSD,2026-02-02,21:58:00,....
+    // Public CSV from Stooq.
+    // Intraday endpoint can sometimes return N/D; we fall back to daily close.
     private func fetchGoldXAUUSD() async -> Double? {
-        guard let url = URL(string: "https://stooq.com/q/l/?s=xauusd&f=sd2t2ohlcv&h&e=csv") else { return nil }
+        // 1) intraday last
+        if let v = await fetchStooqClose(url: "https://stooq.com/q/l/?s=xauusd&f=sd2t2ohlcv&h&e=csv") {
+            return v
+        }
+        // 2) daily (more stable)
+        if let v = await fetchStooqClose(url: "https://stooq.com/q/d/l/?s=xauusd&i=d") {
+            return v
+        }
+        return nil
+    }
 
+    private func fetchStooqClose(url: String) async -> Double? {
+        guard let u = URL(string: url) else { return nil }
         do {
-            let (data, _) = try await session.data(from: url)
+            let (data, _) = try await session.data(from: u)
             guard let text = String(data: data, encoding: .utf8) else { return nil }
-            let lines = text.split(separator: "\n", omittingEmptySubsequences: true)
+            let lines = text.split(whereSeparator: \.isNewline)
             guard lines.count >= 2 else { return nil }
             let fields = lines[1].split(separator: ",")
-            // fields: Symbol,Date,Time,Open,High,Low,Close,Volume
-            guard fields.count >= 7 else { return nil }
-            let close = fields[6]
-            return Double(close)
+            // q/l: Symbol,Date,Time,Open,High,Low,Close,Volume
+            // q/d/l: Symbol,Date,Open,High,Low,Close,Volume
+            let closeIndex = (fields.count >= 8) ? 6 : ((fields.count >= 6) ? 5 : -1)
+            guard closeIndex >= 0, fields.count > closeIndex else { return nil }
+
+            let raw = fields[closeIndex].trimmingCharacters(in: .whitespacesAndNewlines)
+            if raw.isEmpty || raw == "N/D" || raw == "n/a" { return nil }
+            return Double(raw)
         } catch {
             return nil
         }
