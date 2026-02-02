@@ -27,17 +27,117 @@ final class PriceService {
 
     func fetchAll() async -> PricesSnapshot {
         async let ce = fetchCoinGecko()
+        async let ex = fetchFromExchanges()
         async let xau = fetchGoldXAUUSD()
         async let xag = fetchSilverXAGUSD()
 
-        let (btc, eth) = await ce
+        let (exBtc, exEth) = await ex
+        let (cgBtc, cgEth) = await ce
+
         let gold = await xau
         let silver = await xag
+
+        // Prefer exchange tickers; fall back to CoinGecko.
+        let btc = exBtc ?? cgBtc
+        let eth = exEth ?? cgEth
 
         return PricesSnapshot(btcUsd: btc, ethUsd: eth, xauUsd: gold, xagUsd: silver, updatedAt: Date())
     }
 
-    // MARK: - CoinGecko
+    // MARK: - Exchanges (primary)
+
+    private func fetchFromExchanges() async -> (Double?, Double?) {
+        // Try in order: Binance → OKX → Bybit
+        if let v = await fetchBinance() { return v }
+        if let v = await fetchOKX() { return v }
+        if let v = await fetchBybit() { return v }
+        return (nil, nil)
+    }
+
+    private func fetchBinance() async -> (Double?, Double?)? {
+        async let btc = fetchBinancePrice(symbol: "BTCUSDT")
+        async let eth = fetchBinancePrice(symbol: "ETHUSDT")
+        let b = await btc
+        let e = await eth
+        if b == nil && e == nil { return nil }
+        return (b, e)
+    }
+
+    private struct BinancePriceResp: Decodable {
+        let price: String
+    }
+
+    private func fetchBinancePrice(symbol: String) async -> Double? {
+        guard let url = URL(string: "https://api.binance.com/api/v3/ticker/price?symbol=\(symbol)") else { return nil }
+        do {
+            let (data, _) = try await session.data(from: url)
+            let decoded = try JSONDecoder().decode(BinancePriceResp.self, from: data)
+            return Double(decoded.price)
+        } catch {
+            return nil
+        }
+    }
+
+    private func fetchOKX() async -> (Double?, Double?)? {
+        async let btc = fetchOKXLast(instId: "BTC-USDT")
+        async let eth = fetchOKXLast(instId: "ETH-USDT")
+        let b = await btc
+        let e = await eth
+        if b == nil && e == nil { return nil }
+        return (b, e)
+    }
+
+    private struct OKXResp: Decodable {
+        struct Item: Decodable {
+            let last: String?
+        }
+        let data: [Item]?
+    }
+
+    private func fetchOKXLast(instId: String) async -> Double? {
+        guard let url = URL(string: "https://www.okx.com/api/v5/market/ticker?instId=\(instId)") else { return nil }
+        do {
+            let (data, _) = try await session.data(from: url)
+            let decoded = try JSONDecoder().decode(OKXResp.self, from: data)
+            guard let last = decoded.data?.first?.last else { return nil }
+            return Double(last)
+        } catch {
+            return nil
+        }
+    }
+
+    private func fetchBybit() async -> (Double?, Double?)? {
+        async let btc = fetchBybitLast(symbol: "BTCUSDT")
+        async let eth = fetchBybitLast(symbol: "ETHUSDT")
+        let b = await btc
+        let e = await eth
+        if b == nil && e == nil { return nil }
+        return (b, e)
+    }
+
+    private struct BybitResp: Decodable {
+        struct Result: Decodable {
+            struct Item: Decodable {
+                let lastPrice: String?
+            }
+            let list: [Item]?
+        }
+        let result: Result?
+    }
+
+    private func fetchBybitLast(symbol: String) async -> Double? {
+        guard let url = URL(string: "https://api.bybit.com/v5/market/tickers?category=spot&symbol=\(symbol)") else { return nil }
+        do {
+            let (data, _) = try await session.data(from: url)
+            let decoded = try JSONDecoder().decode(BybitResp.self, from: data)
+            guard let last = decoded.result?.list?.first?.lastPrice else { return nil }
+            return Double(last)
+        } catch {
+            return nil
+        }
+    }
+
+    // MARK: - CoinGecko (fallback)
 
     private struct CoinGeckoResp: Decodable {
         struct Item: Decodable {

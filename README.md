@@ -8,7 +8,7 @@ A tiny macOS always-on-top desktop ticker for **BTC**, **ETH**, **Gold (XAU/USD)
 
 ## Data sources
 
-- BTC/ETH: CoinGecko (no API key)
+- BTC/ETH: Binance / OKX / Bybit public ticker (primary), CoinGecko fallback
 - Gold/Silver: Stooq (public CSV for XAUUSD/XAGUSD)
 
 ## Build & Run
