@@ -113,6 +113,10 @@ final class TickerView: NSView {
     private let xag = NSTextField(labelWithString: "XAG/USD: —")
     private let updated = NSTextField(labelWithString: "—")
 
+    private let valueColor = NSColor(white: 1, alpha: 1)
+    private let loadingColor = NSColor(white: 1, alpha: 0.55)
+    private var lastUpdatedAt: Date? = nil
+
     private var snapshot: PricesSnapshot?
     private var clockTimer: Timer?
 
@@ -211,21 +215,36 @@ final class TickerView: NSView {
 
     func update(snapshot: PricesSnapshot) {
         self.snapshot = snapshot
-        btc.stringValue = "BTC: \(fmt(snapshot.btcUsd))"
-        eth.stringValue = "ETH: \(fmt(snapshot.ethUsd))"
-        xau.stringValue = "XAU/USD: \(fmt(snapshot.xauUsd))"
-        xag.stringValue = "XAG/USD: \(fmt(snapshot.xagUsd))"
+        lastUpdatedAt = snapshot.updatedAt
+
+        setLine(label: btc, name: "BTC", value: snapshot.btcUsd)
+        setLine(label: eth, name: "ETH", value: snapshot.ethUsd)
+        setLine(label: xau, name: "XAU/USD", value: snapshot.xauUsd)
+        setLine(label: xag, name: "XAG/USD", value: snapshot.xagUsd)
+
         updateClock()
+    }
+
+    private func setLine(label: NSTextField, name: String, value: Double?) {
+        if let v = value {
+            label.textColor = valueColor
+            label.stringValue = "\(name): \(fmt(v))"
+        } else {
+            label.textColor = loadingColor
+            label.stringValue = "\(name): loading…"
+        }
     }
 
     private func updateClock() {
         let df = DateFormatter()
         df.dateFormat = "HH:mm:ss"
-        updated.stringValue = "Now: \(df.string(from: Date()))"
+
+        let nowStr = df.string(from: Date())
+        let updStr = lastUpdatedAt.map { df.string(from: $0) } ?? "—"
+        updated.stringValue = "Updated: \(updStr) • Now: \(nowStr)"
     }
 
-    private func fmt(_ v: Double?) -> String {
-        guard let v else { return "loading…" }
+    private func fmt(_ v: Double) -> String {
         if v >= 1000 { return String(format: "$%.0f", v) }
         if v >= 100 { return String(format: "$%.2f", v) }
         return String(format: "$%.4f", v)
