@@ -4,6 +4,7 @@ struct PricesSnapshot {
     var btcUsd: Double?
     var ethUsd: Double?
     var xauUsd: Double?
+    var xagUsd: Double?
     var updatedAt: Date
 }
 
@@ -20,11 +21,13 @@ final class PriceService {
     func fetchAll() async -> PricesSnapshot {
         async let ce = fetchCoinGecko()
         async let xau = fetchGoldXAUUSD()
+        async let xag = fetchSilverXAGUSD()
 
         let (btc, eth) = await ce
         let gold = await xau
+        let silver = await xag
 
-        return PricesSnapshot(btcUsd: btc, ethUsd: eth, xauUsd: gold, updatedAt: Date())
+        return PricesSnapshot(btcUsd: btc, ethUsd: eth, xauUsd: gold, xagUsd: silver, updatedAt: Date())
     }
 
     // MARK: - CoinGecko
@@ -56,12 +59,20 @@ final class PriceService {
     // Public CSV from Stooq.
     // Intraday endpoint can sometimes return N/D; we fall back to daily close.
     private func fetchGoldXAUUSD() async -> Double? {
-        // 1) intraday last
-        if let v = await fetchStooqClose(url: "https://stooq.com/q/l/?s=xauusd&f=sd2t2ohlcv&h&e=csv") {
+        return await fetchStooqSymbolUSD(symbol: "xauusd")
+    }
+
+    private func fetchSilverXAGUSD() async -> Double? {
+        return await fetchStooqSymbolUSD(symbol: "xagusd")
+    }
+
+    private func fetchStooqSymbolUSD(symbol: String) async -> Double? {
+        // Stooq intraday is generally OK; daily endpoint for these symbols can be unreliable.
+        if let v = await fetchStooqClose(url: "https://stooq.com/q/l/?s=\(symbol)&f=sd2t2ohlcv&h&e=csv") {
             return v
         }
-        // 2) daily (more stable)
-        if let v = await fetchStooqClose(url: "https://stooq.com/q/d/l/?s=xauusd&i=d") {
+        // Fallback: same intraday without header flag
+        if let v = await fetchStooqClose(url: "https://stooq.com/q/l/?s=\(symbol)&f=sd2t2ohlcv&e=csv") {
             return v
         }
         return nil

@@ -13,7 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory) // no dock icon
 
-        view = TickerView(frame: NSRect(x: 0, y: 0, width: 280, height: 120))
+        view = TickerView(frame: NSRect(x: 0, y: 0, width: 280, height: 138))
         view.onMenuRequested = { [weak self] in self?.showMenu() }
         view.onRefreshRequested = { [weak self] in self?.refreshNow() }
 
@@ -110,6 +110,7 @@ final class TickerView: NSView {
     private let btc = NSTextField(labelWithString: "BTC: —")
     private let eth = NSTextField(labelWithString: "ETH: —")
     private let xau = NSTextField(labelWithString: "XAU/USD: —")
+    private let xag = NSTextField(labelWithString: "XAG/USD: —")
     private let updated = NSTextField(labelWithString: "—")
 
     private var snapshot: PricesSnapshot?
@@ -153,7 +154,7 @@ final class TickerView: NSView {
         refreshBtn.target = self
         refreshBtn.action = #selector(refreshClicked)
 
-        for l in [btc, eth, xau] {
+        for l in [btc, eth, xau, xag] {
             l.font = .monospacedDigitSystemFont(ofSize: 14, weight: .semibold)
             l.textColor = .white
         }
@@ -166,7 +167,7 @@ final class TickerView: NSView {
         header.alignment = .centerY
         header.spacing = 8
 
-        let stack = NSStackView(views: [header, btc, eth, xau, updated])
+        let stack = NSStackView(views: [header, btc, eth, xau, xag, updated])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 6
@@ -183,7 +184,7 @@ final class TickerView: NSView {
             refreshBtn.heightAnchor.constraint(equalToConstant: 24)
         ])
 
-        update(snapshot: PricesSnapshot(btcUsd: nil, ethUsd: nil, xauUsd: nil, updatedAt: Date()))
+        update(snapshot: PricesSnapshot(btcUsd: nil, ethUsd: nil, xauUsd: nil, xagUsd: nil, updatedAt: Date()))
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -202,6 +203,7 @@ final class TickerView: NSView {
         btc.stringValue = "BTC: \(fmt(snapshot.btcUsd))"
         eth.stringValue = "ETH: \(fmt(snapshot.ethUsd))"
         xau.stringValue = "XAU/USD: \(fmt(snapshot.xauUsd))"
+        xag.stringValue = "XAG/USD: \(fmt(snapshot.xagUsd))"
 
         let df = DateFormatter()
         df.dateFormat = "HH:mm:ss"
@@ -241,6 +243,7 @@ enum AlertsDialog {
             [NSTextField(labelWithString: "BTC"), NSTextField(), NSTextField()],
             [NSTextField(labelWithString: "ETH"), NSTextField(), NSTextField()],
             [NSTextField(labelWithString: "XAU/USD"), NSTextField(), NSTextField()],
+            [NSTextField(labelWithString: "XAG/USD"), NSTextField(), NSTextField()],
         ])
         grid.rowSpacing = 8
         grid.columnSpacing = 10
@@ -257,8 +260,10 @@ enum AlertsDialog {
         let ethB = grid.cell(atColumnIndex: 2, rowIndex: 2).contentView as! NSTextField
         let xauA = grid.cell(atColumnIndex: 1, rowIndex: 3).contentView as! NSTextField
         let xauB = grid.cell(atColumnIndex: 2, rowIndex: 3).contentView as! NSTextField
+        let xagA = grid.cell(atColumnIndex: 1, rowIndex: 4).contentView as! NSTextField
+        let xagB = grid.cell(atColumnIndex: 2, rowIndex: 4).contentView as! NSTextField
 
-        for tf in [btcA, btcB, ethA, ethB, xauA, xauB] { setup(tf) }
+        for tf in [btcA, btcB, ethA, ethB, xauA, xauB, xagA, xagB] { setup(tf) }
 
         func s(_ v: Double?) -> String {
             guard let v else { return "" }
@@ -271,8 +276,10 @@ enum AlertsDialog {
         ethB.stringValue = s(current.ethBelow)
         xauA.stringValue = s(current.xauAbove)
         xauB.stringValue = s(current.xauBelow)
+        xagA.stringValue = s(current.xagAbove)
+        xagB.stringValue = s(current.xagBelow)
 
-        let accessory = NSView(frame: NSRect(x: 0, y: 0, width: 360, height: 140))
+        let accessory = NSView(frame: NSRect(x: 0, y: 0, width: 360, height: 168))
         accessory.addSubview(grid)
         NSLayoutConstraint.activate([
             grid.leadingAnchor.constraint(equalTo: accessory.leadingAnchor),
@@ -296,7 +303,9 @@ enum AlertsDialog {
             ethAbove: d(ethA.stringValue),
             ethBelow: d(ethB.stringValue),
             xauAbove: d(xauA.stringValue),
-            xauBelow: d(xauB.stringValue)
+            xauBelow: d(xauB.stringValue),
+            xagAbove: d(xagA.stringValue),
+            xagBelow: d(xagB.stringValue)
         ))
     }
 }

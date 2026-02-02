@@ -1,6 +1,6 @@
 # MacPriceTicker
 
-A tiny macOS always-on-top desktop ticker for **BTC**, **ETH**, and **Gold (XAU/USD)**, with configurable price alerts.
+A tiny macOS always-on-top desktop ticker for **BTC**, **ETH**, **Gold (XAU/USD)**, and **Silver (XAG/USD)**, with configurable price alerts.
 
 - Floating always-on-top window (drag to move)
 - Updates every ~15s
@@ -9,7 +9,7 @@ A tiny macOS always-on-top desktop ticker for **BTC**, **ETH**, and **Gold (XAU/
 ## Data sources
 
 - BTC/ETH: CoinGecko (no API key)
-- Gold: Stooq (public CSV for XAUUSD)
+- Gold/Silver: Stooq (public CSV for XAUUSD/XAGUSD)
 
 ## Build & Run
 

@@ -8,6 +8,8 @@ struct AlertSettings: Codable {
     var ethBelow: Double?
     var xauAbove: Double?
     var xauBelow: Double?
+    var xagAbove: Double?
+    var xagBelow: Double?
 }
 
 final class Alerts {
@@ -40,6 +42,7 @@ final class Alerts {
         check(symbol: "BTC", above: settings.btcAbove, below: settings.btcBelow, value: prices.btcUsd, prefix: "btc")
         check(symbol: "ETH", above: settings.ethAbove, below: settings.ethBelow, value: prices.ethUsd, prefix: "eth")
         check(symbol: "XAU/USD", above: settings.xauAbove, below: settings.xauBelow, value: prices.xauUsd, prefix: "xau")
+        check(symbol: "XAG/USD", above: settings.xagAbove, below: settings.xagBelow, value: prices.xagUsd, prefix: "xag")
     }
 
     private func check(symbol: String, above: Double?, below: Double?, value: Double?, prefix: String) {
