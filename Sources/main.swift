@@ -13,7 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory) // no dock icon
 
-        view = TickerView(frame: NSRect(x: 0, y: 0, width: 280, height: 138))
+        view = TickerView(frame: NSRect(x: 0, y: 0, width: 246, height: 184))
         view.onMenuRequested = { [weak self] in self?.showMenu() }
         view.onRefreshRequested = { [weak self] in self?.refreshNow() }
 
@@ -109,6 +109,8 @@ final class TickerView: NSView {
     private let refreshBtn = NSButton(title: "↻", target: nil, action: nil)
     private let btc = NSTextField(labelWithString: "BTC: —")
     private let eth = NSTextField(labelWithString: "ETH: —")
+    private let btcTurnover = NSTextField(labelWithString: "BTC 24h Turnover: —")
+    private let ethTurnover = NSTextField(labelWithString: "ETH 24h Turnover: —")
     private let xau = NSTextField(labelWithString: "XAU/USD: —")
     private let xag = NSTextField(labelWithString: "XAG/USD: —")
     private let updated = NSTextField(labelWithString: "—")
@@ -148,7 +150,7 @@ final class TickerView: NSView {
 
         title.font = .boldSystemFont(ofSize: 13)
         title.textColor = .white
-        title.stringValue = "BTC / ETH / Gold"
+        title.stringValue = "BTC / ETH / Gold / Silver"
 
         refreshBtn.bezelStyle = .texturedRounded
         refreshBtn.isBordered = true
@@ -164,6 +166,11 @@ final class TickerView: NSView {
             l.textColor = .white
         }
 
+        btcTurnover.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
+        btcTurnover.textColor = NSColor(calibratedRed: 0.66, green: 0.94, blue: 1.0, alpha: 1.0)
+        ethTurnover.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
+        ethTurnover.textColor = NSColor(calibratedRed: 0.66, green: 0.94, blue: 1.0, alpha: 0.92)
+
         updated.font = .systemFont(ofSize: 11)
         updated.textColor = NSColor(white: 1, alpha: 0.65)
 
@@ -172,7 +179,7 @@ final class TickerView: NSView {
         header.alignment = .centerY
         header.spacing = 8
 
-        let stack = NSStackView(views: [header, btc, eth, xau, xag, updated])
+        let stack = NSStackView(views: [header, btc, eth, btcTurnover, ethTurnover, xau, xag, updated])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 6
@@ -194,7 +201,15 @@ final class TickerView: NSView {
             self?.updateClock()
         }
 
-        update(snapshot: PricesSnapshot(btcUsd: nil, ethUsd: nil, xauUsd: nil, xagUsd: nil, updatedAt: Date()))
+        update(snapshot: PricesSnapshot(
+            btcUsd: nil,
+            ethUsd: nil,
+            btcTurnover24h: nil,
+            ethTurnover24h: nil,
+            xauUsd: nil,
+            xagUsd: nil,
+            updatedAt: Date()
+        ))
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -219,6 +234,8 @@ final class TickerView: NSView {
 
         setLine(label: btc, name: "BTC", value: snapshot.btcUsd)
         setLine(label: eth, name: "ETH", value: snapshot.ethUsd)
+        setTurnover(label: btcTurnover, name: "BTC", value: snapshot.btcTurnover24h)
+        setTurnover(label: ethTurnover, name: "ETH", value: snapshot.ethTurnover24h)
         setLine(label: xau, name: "XAU/USD", value: snapshot.xauUsd)
         setLine(label: xag, name: "XAG/USD", value: snapshot.xagUsd)
 
@@ -232,6 +249,14 @@ final class TickerView: NSView {
         } else {
             label.textColor = loadingColor
             label.stringValue = "\(name): loading…"
+        }
+    }
+
+    private func setTurnover(label: NSTextField, name: String, value: Double?) {
+        if let v = value {
+            label.stringValue = String(format: "\(name) 24h Turnover: %.2f%%", v * 100)
+        } else {
+            label.stringValue = "\(name) 24h Turnover: loading…"
         }
     }
 
