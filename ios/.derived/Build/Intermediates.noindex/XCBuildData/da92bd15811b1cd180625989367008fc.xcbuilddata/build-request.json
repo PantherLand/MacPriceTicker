@@ -1,0 +1,65 @@
+{
+  "buildCommand" : {
+    "command" : "build",
+    "skipDependencies" : false,
+    "style" : "buildOnly"
+  },
+  "configuredTargets" : [
+    {
+      "guid" : "dac7bf59051f9a0044d1dce87a990125a4b7dea8da1b799559a7cdad3914260d"
+    },
+    {
+      "guid" : "dac7bf59051f9a0044d1dce87a990125509ef1bbeb7d24673e74eee7ada50383"
+    }
+  ],
+  "containerPath" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/MacPriceTickerIOS.xcodeproj",
+  "continueBuildingAfterErrors" : false,
+  "dependencyScope" : "workspace",
+  "enableIndexBuildArena" : false,
+  "hideShellScriptEnvironment" : false,
+  "parameters" : {
+    "action" : "build",
+    "activeArchitecture" : "undefined_arch",
+    "activeRunDestination" : {
+      "disableOnlyActiveArch" : true,
+      "platform" : "iphonesimulator",
+      "sdk" : "iphonesimulator26.2",
+      "sdkVariant" : "iphonesimulator",
+      "supportedArchitectures" : [
+        "i386",
+        "x86_64"
+      ],
+      "targetArchitecture" : "undefined_arch"
+    },
+    "arenaInfo" : {
+      "buildIntermediatesPath" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex",
+      "buildProductsPath" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Products",
+      "derivedDataPath" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived",
+      "indexDataStoreFolderPath" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Index.noindex/DataStore",
+      "indexEnableDataStore" : true,
+      "indexPCHPath" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Index.noindex/PrecompiledHeaders",
+      "pchPath" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/PrecompiledHeaders"
+    },
+    "configurationName" : "Debug",
+    "overrides" : {
+      "commandLine" : {
+        "table" : {
+          "CODE_SIGNING_ALLOWED" : "NO"
+        }
+      },
+      "synthesized" : {
+        "table" : {
+          "ACTION" : "build",
+          "ENABLE_PREVIEWS" : "NO",
+          "ENABLE_XOJIT_PREVIEWS" : "YES"
+        }
+      }
+    }
+  },
+  "schemeCommand" : "launch",
+  "showNonLoggedProgress" : true,
+  "useDryRun" : false,
+  "useImplicitDependencies" : true,
+  "useLegacyBuildLocations" : false,
+  "useParallelTargets" : true
+}

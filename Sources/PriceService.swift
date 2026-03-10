@@ -8,11 +8,51 @@ struct PricesSnapshot {
     var ethTurnover24h: Double?
     var xauUsd: Double?
     var xagUsd: Double?
+    var oilUsd: Double?
     var updatedAt: Date
+}
+
+actor TurnoverCache {
+    private var cached: (Double?, Double?)?
+    private var updatedAt: Date?
+    private var lastFailedAt: Date?
+    private let refreshInterval: TimeInterval
+
+    init(refreshInterval: TimeInterval) {
+        self.refreshInterval = refreshInterval
+    }
+
+    func freshValue(now: Date = Date()) -> (Double?, Double?)? {
+        guard let cached, let updatedAt else { return nil }
+        guard now.timeIntervalSince(updatedAt) < refreshInterval else { return nil }
+        return cached
+    }
+
+    func canRetry(now: Date = Date(), retryInterval: TimeInterval) -> Bool {
+        guard let lastFailedAt else { return true }
+        return now.timeIntervalSince(lastFailedAt) >= retryInterval
+    }
+
+    func currentValue() -> (Double?, Double?)? {
+        return cached
+    }
+
+    func store(_ value: (Double?, Double?), now: Date = Date()) {
+        cached = value
+        updatedAt = now
+        lastFailedAt = nil
+    }
+
+    func markFailure(now: Date = Date()) {
+        lastFailedAt = now
+    }
 }
 
 final class PriceService {
     private let session: URLSession
+    private let turnoverCache = TurnoverCache(refreshInterval: 10 * 60)
+    private let turnoverRetryInterval: TimeInterval = 60
+    private let coinGeckoAPIKey: String?
 
     init() {
         let cfg = URLSessionConfiguration.ephemeral
@@ -25,6 +65,12 @@ final class PriceService {
         }
 
         self.session = URLSession(configuration: cfg)
+        let keyFromBundle = Bundle.main.object(forInfoDictionaryKey: "CoinGeckoAPIKey") as? String
+        let keyFromEnv = ProcessInfo.processInfo.environment["COINGECKO_API_KEY"]
+        let key = (keyFromBundle?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
+            ? keyFromBundle
+            : keyFromEnv
+        self.coinGeckoAPIKey = key?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func fetchData(from url: URL, headers: [String: String] = [:]) async throws -> Data {
@@ -41,12 +87,20 @@ final class PriceService {
         return data
     }
 
-    func fetchAll() async -> PricesSnapshot {
+    private func coinGeckoHeaders() -> [String: String] {
+        guard let key = coinGeckoAPIKey, !key.isEmpty else { return [:] }
+        return [
+            "x-cg-demo-api-key": key
+        ]
+    }
+
+    func fetchAll(forceRefreshTurnover: Bool = false) async -> PricesSnapshot {
         async let ce = fetchCoinGecko()
         async let ex = fetchFromExchanges()
-        async let turnover = fetchTurnovers24h()
+        async let turnover = fetchTurnovers24hCached(forceRefresh: forceRefreshTurnover)
         async let xau = fetchGoldXAUUSD()
         async let xag = fetchSilverXAGUSD()
+        async let oil = fetchOilWTIUSD()
 
         let (exBtc, exEth) = await ex
         let (cgBtc, cgEth) = await ce
@@ -54,6 +108,7 @@ final class PriceService {
 
         let gold = await xau
         let silver = await xag
+        let oilPrice = await oil
 
         // Prefer exchange tickers; fall back to CoinGecko.
         let btc = exBtc ?? cgBtc
@@ -66,8 +121,31 @@ final class PriceService {
             ethTurnover24h: ethTurnover24h,
             xauUsd: gold,
             xagUsd: silver,
+            oilUsd: oilPrice,
             updatedAt: Date()
         )
+    }
+
+    private func fetchTurnovers24hCached(forceRefresh: Bool) async -> (Double?, Double?) {
+        let now = Date()
+        if !forceRefresh, let cached = await turnoverCache.freshValue(now: now) {
+            return cached
+        }
+
+        if !forceRefresh, !(await turnoverCache.canRetry(now: now, retryInterval: turnoverRetryInterval)) {
+            return (nil, nil)
+        }
+
+        let fresh = await fetchTurnovers24h()
+        if fresh.0 != nil || fresh.1 != nil {
+            await turnoverCache.store(fresh, now: now)
+            return fresh
+        }
+
+        await turnoverCache.markFailure(now: now)
+
+        // On fetch failure, show loading instead of falling back to stale cache.
+        return fresh
     }
 
     // MARK: - Exchanges (primary)
@@ -179,7 +257,7 @@ final class PriceService {
         }
 
         do {
-            let data = try await fetchData(from: url)
+            let data = try await fetchData(from: url, headers: coinGeckoHeaders())
             let decoded = try JSONDecoder().decode(CoinGeckoResp.self, from: data)
             return (decoded.bitcoin?.usd, decoded.ethereum?.usd)
         } catch {
@@ -188,91 +266,8 @@ final class PriceService {
     }
 
     private func fetchTurnovers24h() async -> (Double?, Double?) {
-        let paprika = await fetchCoinPaprikaTurnovers24h()
-        var btc = paprika.0
-        var eth = paprika.1
-
-        if btc == nil || eth == nil {
-            let gecko = await fetchCoinGeckoTurnovers24h()
-            btc = btc ?? gecko.0
-            eth = eth ?? gecko.1
-        }
-
-        if btc == nil || eth == nil {
-            // Last-resort approximation from Binance volume and circulating supply.
-            async let btcApprox = fetchBinanceTurnover24hApprox(
-                symbol: "BTCUSDT",
-                supplyFetcher: fetchBTCCirculatingSupply,
-                fallbackSupply: 19_900_000
-            )
-            async let ethApprox = fetchBinanceTurnover24hApprox(
-                symbol: "ETHUSDT",
-                supplyFetcher: fetchETHCirculatingSupply,
-                fallbackSupply: 120_000_000
-            )
-
-            let btcApproxValue = await btcApprox
-            let ethApproxValue = await ethApprox
-            if btc == nil { btc = btcApproxValue }
-            if eth == nil { eth = ethApproxValue }
-        }
-
-        return (btc, eth)
-    }
-
-    private struct CoinPaprikaResp: Decodable {
-        let totalSupply: Double?
-
-        enum RootKeys: String, CodingKey {
-            case totalSupply = "total_supply"
-            case quotes
-        }
-
-        struct Quotes: Decodable {
-            struct USD: Decodable {
-                let volume24h: Double?
-                let marketCap: Double?
-
-                enum CodingKeys: String, CodingKey {
-                    case volume24h = "volume_24h"
-                    case marketCap = "market_cap"
-                }
-            }
-
-            let usd: USD?
-
-            enum CodingKeys: String, CodingKey {
-                case usd = "USD"
-            }
-        }
-
-        let quotes: Quotes?
-
-        init(from decoder: Decoder) throws {
-            let c = try decoder.container(keyedBy: RootKeys.self)
-            totalSupply = try c.decodeIfPresent(Double.self, forKey: .totalSupply)
-            quotes = try c.decodeIfPresent(Quotes.self, forKey: .quotes)
-        }
-    }
-
-    private func fetchCoinPaprikaTurnovers24h() async -> (Double?, Double?) {
-        async let btc = fetchCoinPaprikaTurnover24h(id: "btc-bitcoin")
-        async let eth = fetchCoinPaprikaTurnover24h(id: "eth-ethereum")
-        return (await btc, await eth)
-    }
-
-    private func fetchCoinPaprikaTurnover24h(id: String) async -> Double? {
-        guard let url = URL(string: "https://api.coinpaprika.com/v1/tickers/\(id)") else { return nil }
-        do {
-            let data = try await fetchData(from: url)
-            let decoded = try JSONDecoder().decode(CoinPaprikaResp.self, from: data)
-            guard let vol = decoded.quotes?.usd?.volume24h, let cap = decoded.quotes?.usd?.marketCap, cap > 0 else {
-                return nil
-            }
-            return vol / cap
-        } catch {
-            return nil
-        }
+        // Turnover uses CoinGecko only.
+        return await fetchCoinGeckoTurnovers24h()
     }
 
     private struct CoinGeckoTurnoverResp: Decodable {
@@ -290,18 +285,13 @@ final class PriceService {
         let ethereum: Item?
     }
 
-    private struct Binance24hResp: Decodable {
-        let quoteVolume: String
-        let lastPrice: String
-    }
-
     private func fetchCoinGeckoTurnovers24h() async -> (Double?, Double?) {
         guard let url = URL(string: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true") else {
             return (nil, nil)
         }
 
         do {
-            let data = try await fetchData(from: url)
+            let data = try await fetchData(from: url, headers: coinGeckoHeaders())
             let decoded = try JSONDecoder().decode(CoinGeckoTurnoverResp.self, from: data)
             return (
                 turnoverRatio(item: decoded.bitcoin),
@@ -317,62 +307,6 @@ final class PriceService {
         return vol / cap
     }
 
-    private func fetchBinanceTurnover24hApprox(
-        symbol: String,
-        supplyFetcher: @escaping () async -> Double?,
-        fallbackSupply: Double?
-    ) async -> Double? {
-        guard let url = URL(string: "https://api.binance.com/api/v3/ticker/24hr?symbol=\(symbol)") else { return nil }
-
-        do {
-            let data = try await fetchData(from: url)
-            let decoded = try JSONDecoder().decode(Binance24hResp.self, from: data)
-            guard let quoteVol = Double(decoded.quoteVolume), quoteVol > 0 else { return nil }
-
-            let supply = (await supplyFetcher()) ?? fallbackSupply
-            let price = Double(decoded.lastPrice)
-            guard let p = price, p > 0, let supply, supply > 0 else { return nil }
-
-            let marketCap = p * supply
-            guard marketCap > 0 else { return nil }
-            return quoteVol / marketCap
-        } catch {
-            return nil
-        }
-    }
-
-    private func fetchBTCCirculatingSupply() async -> Double? {
-        guard let url = URL(string: "https://blockchain.info/q/totalbc") else { return nil }
-        do {
-            let data = try await fetchData(from: url)
-            guard let text = String(data: data, encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines),
-                let satoshis = Double(text),
-                satoshis > 0 else {
-                return await fetchCoinPaprikaTotalSupply(id: "btc-bitcoin")
-            }
-            return satoshis / 100_000_000.0
-        } catch {
-            return await fetchCoinPaprikaTotalSupply(id: "btc-bitcoin")
-        }
-    }
-
-    private func fetchETHCirculatingSupply() async -> Double? {
-        return await fetchCoinPaprikaTotalSupply(id: "eth-ethereum")
-    }
-
-    private func fetchCoinPaprikaTotalSupply(id: String) async -> Double? {
-        guard let url = URL(string: "https://api.coinpaprika.com/v1/tickers/\(id)") else { return nil }
-        do {
-            let data = try await fetchData(from: url)
-            let decoded = try JSONDecoder().decode(CoinPaprikaResp.self, from: data)
-            guard let supply = decoded.totalSupply, supply > 0 else { return nil }
-            return supply
-        } catch {
-            return nil
-        }
-    }
-
     // MARK: - Gold (XAU/USD)
 
     private func fetchGoldXAUUSD() async -> Double? {
@@ -385,6 +319,13 @@ final class PriceService {
         if let v = await fetchYahooChartPrice(symbol: "SI=F") { return v }
         if let v = await fetchCurrencyApiMetalUSD(base: "xag") { return v }
         return await fetchStooqSymbolUSD(symbol: "xagusd")
+    }
+
+    private func fetchOilWTIUSD() async -> Double? {
+        // WTI (CL=F) primary, Brent (BZ=F) fallback.
+        if let v = await fetchYahooChartPrice(symbol: "CL=F") { return v }
+        if let v = await fetchYahooChartPrice(symbol: "BZ=F") { return v }
+        return nil
     }
 
     private struct YahooChartResp: Decodable {

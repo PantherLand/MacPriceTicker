@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>logFormatVersion</key>
+	<integer>12</integer>
+	<key>logs</key>
+	<dict>
+		<key>27881AC6-6971-43FB-B999-F78B67C1F463</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>27881AC6-6971-43FB-B999-F78B67C1F463.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>2</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>MacPriceTickerIOS project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>MacPriceTickerIOS</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project MacPriceTickerIOS with scheme MacPriceTickerIOS</string>
+			<key>timeStartedRecording</key>
+			<real>794809315.38674903</real>
+			<key>timeStoppedRecording</key>
+			<real>794809319.01577795</real>
+			<key>title</key>
+			<string>Building project MacPriceTickerIOS with scheme MacPriceTickerIOS</string>
+			<key>uniqueIdentifier</key>
+			<string>27881AC6-6971-43FB-B999-F78B67C1F463</string>
+		</dict>
+		<key>31CF255F-260E-4147-BBDD-457FD9A2D1A9</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>31CF255F-260E-4147-BBDD-457FD9A2D1A9.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>4</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>MacPriceTickerIOS project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>MacPriceTickerIOS</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project MacPriceTickerIOS with scheme MacPriceTickerIOS</string>
+			<key>timeStartedRecording</key>
+			<real>794809642.90483701</real>
+			<key>timeStoppedRecording</key>
+			<real>794809733.26201499</real>
+			<key>title</key>
+			<string>Building project MacPriceTickerIOS with scheme MacPriceTickerIOS</string>
+			<key>uniqueIdentifier</key>
+			<string>31CF255F-260E-4147-BBDD-457FD9A2D1A9</string>
+		</dict>
+		<key>E0E34919-AB50-49F8-9841-3A0668632C29</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>E0E34919-AB50-49F8-9841-3A0668632C29.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>4</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>MacPriceTickerIOS project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>MacPriceTickerIOS</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project MacPriceTickerIOS with scheme MacPriceTickerIOS</string>
+			<key>timeStartedRecording</key>
+			<real>794809463.79566598</real>
+			<key>timeStoppedRecording</key>
+			<real>794809527.74802899</real>
+			<key>title</key>
+			<string>Building project MacPriceTickerIOS with scheme MacPriceTickerIOS</string>
+			<key>uniqueIdentifier</key>
+			<string>E0E34919-AB50-49F8-9841-3A0668632C29</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

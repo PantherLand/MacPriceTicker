@@ -1,0 +1,4 @@
+Target dependency graph (2 targets)
+Target 'MacPriceTickerIOS' in project 'MacPriceTickerIOS'
+➜ Explicit dependency on target 'MacPriceTickerWidget' in project 'MacPriceTickerIOS'
+Target 'MacPriceTickerWidget' in project 'MacPriceTickerIOS' (no dependencies)

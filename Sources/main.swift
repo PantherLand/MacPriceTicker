@@ -7,19 +7,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var view: TickerView!
     private let service = PriceService()
     private let alerts = Alerts()
+    private let expandedSize = NSSize(width: 218, height: 206)
+    private let collapsedSize = NSSize(width: 44, height: 44)
+    private var isCollapsed = false
+    private var isTransitioning = false
+    private var expandFromCollapsedOffset = NSPoint(x: 0, y: 0)
 
     private var timer: DispatchSourceTimer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory) // no dock icon
 
-        view = TickerView(frame: NSRect(x: 0, y: 0, width: 246, height: 184))
+        view = TickerView(frame: NSRect(origin: .zero, size: expandedSize))
+        view.autoresizingMask = [.width, .height]
         view.onMenuRequested = { [weak self] in self?.showMenu() }
         view.onRefreshRequested = { [weak self] in self?.refreshNow() }
+        view.onCollapseToggled = { [weak self] collapsed in self?.setCollapsed(collapsed) }
 
         window = FloatingPanel(contentRect: view.bounds)
         window.contentView = view
         window.center()
+        setCollapsed(false, animated: false)
         window.makeKeyAndOrderFront(nil)
 
         startPolling()
@@ -37,7 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         t.setEventHandler { [weak self] in
             guard let self else { return }
             Task {
-                let snap = await self.service.fetchAll()
+                let snap = await self.service.fetchAll(forceRefreshTurnover: false)
                 self.alerts.evaluate(prices: snap)
                 DispatchQueue.main.async {
                     self.view.update(snapshot: snap)
@@ -62,7 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func refreshNow() {
         Task {
-            let snap = await service.fetchAll()
+            let snap = await service.fetchAll(forceRefreshTurnover: true)
             alerts.evaluate(prices: snap)
             await MainActor.run { view.update(snapshot: snap) }
         }
@@ -76,6 +84,64 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func quit() {
         NSApp.terminate(nil)
+    }
+
+    private func setCollapsed(_ collapsed: Bool) {
+        setCollapsed(collapsed, animated: true)
+    }
+
+    private func setCollapsed(_ collapsed: Bool, animated: Bool) {
+        if isCollapsed == collapsed || isTransitioning {
+            return
+        }
+        isCollapsed = collapsed
+        let target = collapsed ? collapsedSize : expandedSize
+        let current = window.frame
+        let targetFrame = window.frameRect(forContentRect: NSRect(origin: .zero, size: target))
+        var newFrame = current
+        newFrame.size = targetFrame.size
+        if collapsed {
+            let expandedOrigin = current.origin
+            let anchor = view.collapseAnchorOnScreen()
+            let collapsedOrigin: NSPoint
+            if let anchor {
+                collapsedOrigin = NSPoint(
+                    x: anchor.x - targetFrame.size.width / 2,
+                    y: anchor.y - targetFrame.size.height / 2
+                )
+            } else {
+                collapsedOrigin = current.origin
+            }
+            newFrame.origin = collapsedOrigin
+            expandFromCollapsedOffset = NSPoint(
+                x: expandedOrigin.x - collapsedOrigin.x,
+                y: expandedOrigin.y - collapsedOrigin.y
+            )
+        } else {
+            // Expand back to the matching anchor-relative position.
+            newFrame.origin = NSPoint(
+                x: current.origin.x + expandFromCollapsedOffset.x,
+                y: current.origin.y + expandFromCollapsedOffset.y
+            )
+        }
+
+        if animated {
+            isTransitioning = true
+            view.prepareTransition(toCollapsed: collapsed)
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.20
+                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                window.animator().setFrame(newFrame, display: true)
+                view.animateTransition(toCollapsed: collapsed)
+            } completionHandler: { [weak self] in
+                guard let self else { return }
+                self.view.finishTransition(toCollapsed: collapsed)
+                self.isTransitioning = false
+            }
+        } else {
+            window.setFrame(newFrame, display: true, animate: false)
+            view.finishTransition(toCollapsed: collapsed)
+        }
     }
 }
 
@@ -104,15 +170,19 @@ final class FloatingPanel: NSPanel {
 final class TickerView: NSView {
     var onMenuRequested: (() -> Void)?
     var onRefreshRequested: (() -> Void)?
+    var onCollapseToggled: ((Bool) -> Void)?
 
     private let title = NSTextField(labelWithString: "Ticker")
     private let refreshBtn = NSButton(title: "↻", target: nil, action: nil)
+    private let collapseBtn = NSButton(title: "—", target: nil, action: nil)
+    private let compactIcon = NSTextField(labelWithString: "◎")
     private let btc = NSTextField(labelWithString: "BTC: —")
     private let eth = NSTextField(labelWithString: "ETH: —")
     private let btcTurnover = NSTextField(labelWithString: "BTC 24h Turnover: —")
     private let ethTurnover = NSTextField(labelWithString: "ETH 24h Turnover: —")
     private let xau = NSTextField(labelWithString: "XAU/USD: —")
     private let xag = NSTextField(labelWithString: "XAG/USD: —")
+    private let oil = NSTextField(labelWithString: "WTI/USD: —")
     private let updated = NSTextField(labelWithString: "—")
 
     private let valueColor = NSColor(white: 1, alpha: 1)
@@ -121,6 +191,13 @@ final class TickerView: NSView {
 
     private var snapshot: PricesSnapshot?
     private var clockTimer: Timer?
+    private var contentStack: NSStackView!
+    private var contentConstraints: [NSLayoutConstraint] = []
+    private let bgLayer = CAGradientLayer()
+    private let glowLayer = CALayer()
+    private var dragStartWindowOrigin: NSPoint?
+    private var dragStartScreenPoint: NSPoint?
+    private var didDrag = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -128,40 +205,58 @@ final class TickerView: NSView {
         layer?.cornerRadius = 14
         layer?.masksToBounds = true
 
-        let bg = CAGradientLayer()
-        bg.colors = [
-            NSColor(calibratedRed: 0.06, green: 0.05, blue: 0.10, alpha: 0.92).cgColor,
-            NSColor(calibratedRed: 0.03, green: 0.05, blue: 0.08, alpha: 0.92).cgColor
+        bgLayer.colors = [
+            NSColor(calibratedRed: 0.06, green: 0.05, blue: 0.10, alpha: 0.78).cgColor,
+            NSColor(calibratedRed: 0.03, green: 0.05, blue: 0.08, alpha: 0.74).cgColor
         ]
-        bg.startPoint = CGPoint(x: 0, y: 0)
-        bg.endPoint = CGPoint(x: 1, y: 1)
-        bg.frame = bounds
-        layer?.addSublayer(bg)
+        bgLayer.startPoint = CGPoint(x: 0, y: 0)
+        bgLayer.endPoint = CGPoint(x: 1, y: 1)
+        bgLayer.frame = bounds
+        layer?.addSublayer(bgLayer)
 
-        let glow = CALayer()
-        glow.backgroundColor = NSColor(calibratedRed: 0.0, green: 0.9, blue: 1.0, alpha: 0.08).cgColor
-        glow.frame = bounds.insetBy(dx: -20, dy: -20)
-        glow.cornerRadius = 20
-        glow.shadowColor = NSColor.systemPink.cgColor
-        glow.shadowOpacity = 0.25
-        glow.shadowRadius = 18
-        glow.shadowOffset = CGSize(width: 0, height: 0)
-        layer?.addSublayer(glow)
+        glowLayer.backgroundColor = NSColor(calibratedRed: 0.0, green: 0.9, blue: 1.0, alpha: 0.04).cgColor
+        glowLayer.frame = bounds.insetBy(dx: -20, dy: -20)
+        glowLayer.cornerRadius = 20
+        glowLayer.shadowColor = NSColor.systemPink.cgColor
+        glowLayer.shadowOpacity = 0.18
+        glowLayer.shadowRadius = 18
+        glowLayer.shadowOffset = CGSize(width: 0, height: 0)
+        layer?.addSublayer(glowLayer)
 
         title.font = .boldSystemFont(ofSize: 13)
         title.textColor = .white
-        title.stringValue = "BTC / ETH / Gold / Silver"
+        title.stringValue = "BTC / ETH / Gold / Silver / Oil"
 
         refreshBtn.bezelStyle = .texturedRounded
         refreshBtn.isBordered = true
-        refreshBtn.font = .systemFont(ofSize: 13, weight: .bold)
-        refreshBtn.contentTintColor = NSColor(white: 1, alpha: 0.85)
+        let refreshAttrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 13, weight: .bold),
+            .foregroundColor: NSColor.white
+        ]
+        refreshBtn.attributedTitle = NSAttributedString(string: "↻", attributes: refreshAttrs)
+        refreshBtn.attributedAlternateTitle = NSAttributedString(string: "↻", attributes: refreshAttrs)
+        refreshBtn.contentTintColor = .white
         refreshBtn.wantsLayer = true
         refreshBtn.layer?.cornerRadius = 8
         refreshBtn.target = self
         refreshBtn.action = #selector(refreshClicked)
 
-        for l in [btc, eth, xau, xag] {
+        collapseBtn.bezelStyle = .texturedRounded
+        collapseBtn.isBordered = true
+        collapseBtn.font = .systemFont(ofSize: 13, weight: .bold)
+        collapseBtn.contentTintColor = NSColor(white: 1, alpha: 0.9)
+        collapseBtn.wantsLayer = true
+        collapseBtn.layer?.cornerRadius = 8
+        collapseBtn.target = self
+        collapseBtn.action = #selector(collapseClicked)
+
+        compactIcon.font = .systemFont(ofSize: 20, weight: .semibold)
+        compactIcon.textColor = NSColor(white: 1, alpha: 0.9)
+        compactIcon.alignment = .center
+        compactIcon.isHidden = true
+        compactIcon.translatesAutoresizingMaskIntoConstraints = false
+
+        for l in [btc, eth, xau, xag, oil] {
             l.font = .monospacedDigitSystemFont(ofSize: 14, weight: .semibold)
             l.textColor = .white
         }
@@ -179,21 +274,36 @@ final class TickerView: NSView {
         header.alignment = .centerY
         header.spacing = 8
 
-        let stack = NSStackView(views: [header, btc, eth, btcTurnover, ethTurnover, xau, xag, updated])
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 6
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(stack)
+        let footer = NSStackView(views: [updated, NSView(), collapseBtn])
+        footer.orientation = .horizontal
+        footer.alignment = .centerY
+        footer.spacing = 8
 
-        NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
-            stack.topAnchor.constraint(equalTo: topAnchor, constant: 12),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -12),
+        contentStack = NSStackView(views: [header, btc, eth, btcTurnover, ethTurnover, xau, xag, oil, footer])
+        contentStack.orientation = .vertical
+        contentStack.alignment = .leading
+        contentStack.spacing = 6
+        contentStack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(contentStack)
+        addSubview(compactIcon)
 
+        contentConstraints = [
+            contentStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
+            contentStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
+            contentStack.topAnchor.constraint(equalTo: topAnchor, constant: 12),
+            contentStack.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -12)
+        ]
+
+        NSLayoutConstraint.activate(contentConstraints + [
             refreshBtn.widthAnchor.constraint(equalToConstant: 30),
-            refreshBtn.heightAnchor.constraint(equalToConstant: 24)
+            refreshBtn.heightAnchor.constraint(equalToConstant: 24),
+            collapseBtn.widthAnchor.constraint(equalToConstant: 30),
+            collapseBtn.heightAnchor.constraint(equalToConstant: 24),
+
+            compactIcon.centerXAnchor.constraint(equalTo: centerXAnchor),
+            compactIcon.centerYAnchor.constraint(equalTo: centerYAnchor),
+            compactIcon.widthAnchor.constraint(equalToConstant: 24),
+            compactIcon.heightAnchor.constraint(equalToConstant: 24)
         ])
 
         // Live clock (updates every second)
@@ -208,6 +318,7 @@ final class TickerView: NSView {
             ethTurnover24h: nil,
             xauUsd: nil,
             xagUsd: nil,
+            oilUsd: nil,
             updatedAt: Date()
         ))
     }
@@ -221,11 +332,71 @@ final class TickerView: NSView {
 
     override func layout() {
         super.layout()
-        layer?.sublayers?.first?.frame = bounds
+        bgLayer.frame = bounds
+        glowLayer.frame = bounds.insetBy(dx: -20, dy: -20)
     }
 
     @objc private func refreshClicked() {
         onRefreshRequested?()
+    }
+
+    @objc private func collapseClicked() {
+        onCollapseToggled?(true)
+    }
+
+    func collapseAnchorOnScreen() -> NSPoint? {
+        guard let window else { return nil }
+        let pInWindow = collapseBtn.convert(
+            NSPoint(x: collapseBtn.bounds.midX, y: collapseBtn.bounds.midY),
+            to: nil
+        )
+        return window.convertPoint(toScreen: pInWindow)
+    }
+
+    func prepareTransition(toCollapsed collapsed: Bool) {
+        if !collapsed {
+            if !contentConstraints.isEmpty {
+                NSLayoutConstraint.activate(contentConstraints)
+            }
+            contentStack.isHidden = false
+            compactIcon.isHidden = false
+            contentStack.alphaValue = 0
+            compactIcon.alphaValue = 1
+            collapseBtn.isHidden = false
+            layer?.cornerRadius = 14
+            return
+        }
+
+        // Release expanded constraints before shrinking, or Auto Layout can keep the window large.
+        NSLayoutConstraint.deactivate(contentConstraints)
+        contentStack.isHidden = true
+        compactIcon.isHidden = false
+        contentStack.alphaValue = 0
+        compactIcon.alphaValue = 0
+        collapseBtn.isHidden = true
+        layer?.cornerRadius = 12
+    }
+
+    func animateTransition(toCollapsed collapsed: Bool) {
+        if collapsed {
+            compactIcon.animator().alphaValue = 1
+        } else {
+            contentStack.animator().alphaValue = 1
+            compactIcon.animator().alphaValue = 0
+        }
+    }
+
+    func finishTransition(toCollapsed collapsed: Bool) {
+        contentStack.isHidden = collapsed
+        compactIcon.isHidden = !collapsed
+        contentStack.alphaValue = collapsed ? 0 : 1
+        compactIcon.alphaValue = collapsed ? 1 : 0
+        collapseBtn.isHidden = collapsed
+        if !collapsed && !contentConstraints.isEmpty {
+            NSLayoutConstraint.activate(contentConstraints)
+        }
+        layer?.cornerRadius = collapsed ? 12 : 14
+        needsLayout = true
     }
 
     func update(snapshot: PricesSnapshot) {
@@ -238,6 +409,7 @@ final class TickerView: NSView {
         setTurnover(label: ethTurnover, name: "ETH", value: snapshot.ethTurnover24h)
         setLine(label: xau, name: "XAU/USD", value: snapshot.xauUsd)
         setLine(label: xag, name: "XAG/USD", value: snapshot.xagUsd)
+        setLine(label: oil, name: "WTI/USD", value: snapshot.oilUsd)
 
         updateClock()
     }
@@ -276,7 +448,39 @@ final class TickerView: NSView {
     }
 
     override func mouseDown(with event: NSEvent) {
-        window?.performDrag(with: event)
+        guard let window else { return }
+        dragStartWindowOrigin = window.frame.origin
+        dragStartScreenPoint = NSEvent.mouseLocation
+        didDrag = false
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard
+            let window,
+            let startOrigin = dragStartWindowOrigin,
+            let startScreen = dragStartScreenPoint
+        else { return }
+
+        let now = NSEvent.mouseLocation
+        let dx = now.x - startScreen.x
+        let dy = now.y - startScreen.y
+        if abs(dx) > 1 || abs(dy) > 1 {
+            didDrag = true
+        }
+
+        window.setFrameOrigin(NSPoint(x: startOrigin.x + dx, y: startOrigin.y + dy))
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        defer {
+            dragStartWindowOrigin = nil
+            dragStartScreenPoint = nil
+            didDrag = false
+        }
+
+        if contentStack.isHidden && !didDrag {
+            onCollapseToggled?(false)
+        }
     }
 
     override func rightMouseDown(with event: NSEvent) {

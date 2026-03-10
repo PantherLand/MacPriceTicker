@@ -1,0 +1,59 @@
+{
+  "" : {
+    "diagnostics" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOS-primary.dia",
+    "emit-module-dependencies" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOS-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOS-primary-emit-module.dia",
+    "pch" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOS-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOS-primary.swiftdeps"
+  },
+  "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/GeneratedAssetSymbols~partial.swiftmodule"
+  },
+  "/Users/fangxingzhou/dev/MacPriceTicker/ios/App/ContentView.swift" : {
+    "const-values" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/ContentView.d",
+    "diagnostics" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/ContentView.dia",
+    "index-unit-output-path" : "/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/ContentView.o",
+    "llvm-bc" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/ContentView.bc",
+    "object" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/ContentView.o",
+    "swift-dependencies" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/ContentView~partial.swiftmodule"
+  },
+  "/Users/fangxingzhou/dev/MacPriceTicker/ios/App/MacPriceTickerIOSApp.swift" : {
+    "const-values" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOSApp.swiftconstvalues",
+    "dependencies" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOSApp.d",
+    "diagnostics" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOSApp.dia",
+    "index-unit-output-path" : "/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOSApp.o",
+    "llvm-bc" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOSApp.bc",
+    "object" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOSApp.o",
+    "swift-dependencies" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOSApp.swiftdeps",
+    "swiftmodule" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MacPriceTickerIOSApp~partial.swiftmodule"
+  },
+  "/Users/fangxingzhou/dev/MacPriceTicker/ios/Shared/MarketSnapshot.swift" : {
+    "const-values" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MarketSnapshot.swiftconstvalues",
+    "dependencies" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MarketSnapshot.d",
+    "diagnostics" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MarketSnapshot.dia",
+    "index-unit-output-path" : "/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MarketSnapshot.o",
+    "llvm-bc" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MarketSnapshot.bc",
+    "object" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MarketSnapshot.o",
+    "swift-dependencies" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MarketSnapshot.swiftdeps",
+    "swiftmodule" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/MarketSnapshot~partial.swiftmodule"
+  },
+  "/Users/fangxingzhou/dev/MacPriceTicker/ios/Shared/PriceService.swift" : {
+    "const-values" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/PriceService.swiftconstvalues",
+    "dependencies" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/PriceService.d",
+    "diagnostics" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/PriceService.dia",
+    "index-unit-output-path" : "/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/PriceService.o",
+    "llvm-bc" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/PriceService.bc",
+    "object" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/PriceService.o",
+    "swift-dependencies" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/PriceService.swiftdeps",
+    "swiftmodule" : "/Users/fangxingzhou/dev/MacPriceTicker/ios/.derived/Build/Intermediates.noindex/MacPriceTickerIOS.build/Debug-iphonesimulator/MacPriceTickerIOS.build/Objects-normal/x86_64/PriceService~partial.swiftmodule"
+  }
+}

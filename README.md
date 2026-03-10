@@ -1,16 +1,20 @@
 # MacPriceTicker
 
-A tiny macOS always-on-top desktop ticker for **BTC**, **ETH**, **Gold (XAU/USD)**, and **Silver (XAG/USD)**, with configurable price alerts.
+A tiny macOS always-on-top desktop ticker for **BTC**, **ETH**, **Gold (XAU/USD)**, **Silver (XAG/USD)**, and **WTI Oil (WTI/USD)**, with configurable price alerts.
 
 - Floating always-on-top window (drag to move)
 - Updates every ~15s
+- BTC/ETH turnover refreshes every 10 minutes (or immediately on manual Refresh)
 - Alerts via macOS notifications (upper/lower thresholds)
 
 ## Data sources
 
 - BTC/ETH: Binance / OKX / Bybit public ticker (primary), CoinGecko fallback
-- BTC/ETH 24h turnover rate: CoinPaprika `volume_24h / market_cap` (primary), CoinGecko fallback
+- BTC/ETH 24h turnover rate: CoinGecko only (`24h volume / market cap`)
 - Gold/Silver: Yahoo Finance futures (`GC=F` / `SI=F`) primary, currency-api fallback, Stooq fallback
+- Oil (WTI/USD): Yahoo Finance futures (`CL=F`) primary, Brent (`BZ=F`) fallback
+
+CoinGecko key is read from `CoinGeckoAPIKey` in `Resources/Info.plist` (or `COINGECKO_API_KEY` env var).
 
 ## Build & Run
 
